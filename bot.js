@@ -1,14 +1,22 @@
-const { Client, Collection } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js'); // Buraya GatewayIntentBits eklendi
 const fs = require('fs');
 const db = require("quick.db");
 const { prefix } = require('./Settings/config.json');
 require('dotenv').config();
 require('./stayInVoice.js');
 
+// client nesnesi oluşturulurken intents eklendi
 const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates,
+    // Botunuzun ihtiyaç duyabileceği diğer intentleri buraya ekleyebilirsiniz
+  ],
   presence: {
     status: "idle",
-    activity: { name: "MED Ⅰ", type: "LISTENING" }
+    activities: [{ name: "MED Ⅰ", type: "LISTENING" }] // "activity" yerine "activities" ve obje içinde "type" kullanıldı
   }
 });
 
@@ -35,8 +43,8 @@ for (const file of commandFiles) {
 }
 
 // Mesaj olayını işleyin
-client.on('message', async message => {
-  if (!message.content.startsWith(prefix) || message.author.bot || message.channel.type === 'dm') return;
+client.on('messageCreate', async message => { // "message" yerine "messageCreate" kullanıldı
+  if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).split(/ +/);
   const commandName = args.shift().toLowerCase();
@@ -74,18 +82,18 @@ client.on('ready', () => {
     statusIndex = (statusIndex + 1) % statuses.length;
     client.user.setPresence({
       status: 'idle',
-      activity: {
+      activities: [{ // "activities" olarak güncellendi
         name: statuses[statusIndex].name,
         type: statuses[statusIndex].type
-      }
+      }]
     }).catch(error => console.error('Durum ayarlama hatası:', error));
-  }, 10000); // Her 30 saniyede bir durumu değiştir
+  }, 10000); // Her 10 saniyede bir durumu değiştir
 });
 
 
 client.login(process.env.TOKEN);
 
-// Render için HTTP sunucusu (zorunlu değil ama Render'da şart gibi)
+// Render için HTTP sunucusu
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -97,4 +105,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Render HTTP sunucusu ${port} portunda dinleniyor.`);
 });
-
