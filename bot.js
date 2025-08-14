@@ -74,21 +74,29 @@ const statuses = [
 ];
 let statusIndex = 0;
 
+
+
 client.on('ready', () => {
   console.log(`Bot hazır: ${client.user.tag}`);
 
   // Durumları döngüye al
   setInterval(() => {
     statusIndex = (statusIndex + 1) % statuses.length;
-    client.user.setPresence({
-      status: 'idle',
-      activities: [{ // "activities" olarak güncellendi
-        name: statuses[statusIndex].name,
-        type: statuses[statusIndex].type
-      }]
-    }).catch(error => console.error('Durum ayarlama hatası:', error));
-  }, 10000); // Her 10 saniyede bir durumu değiştir
+    try {
+      client.user.setPresence({
+        status: 'idle',
+        activities: [{
+          name: statuses[statusIndex].name,
+          type: statuses[statusIndex].type
+        }]
+      });
+    } catch (error) {
+      console.error('Durum ayarlama hatası:', error);
+    }
+  }, 10000);
 });
+
+
 
 
 client.login(process.env.TOKEN);
