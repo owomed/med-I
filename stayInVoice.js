@@ -1,8 +1,9 @@
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
+const { joinVoiceChannel } = require('@discordjs/voice');
 require('dotenv').config();
 
 const client = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 
 const channelId = '1235643294973956158'; // Ses kanalının ID'sini buraya ekleyin
@@ -22,23 +23,29 @@ client.once('ready', async () => {
     return;
   }
 
-  const joinVoiceChannel = async () => {
+  const joinChannel = () => {
     try {
-      const connection = await voiceChannel.join();
+      const connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+      });
+
       console.log('Ses kanalına katıldı.');
 
       // Bağlantı kesildiğinde yeniden bağlan
       connection.on('disconnect', () => {
         console.log('Ses kanalı bağlantısı kesildi, yeniden bağlanıyor...');
-        setTimeout(joinVoiceChannel, 5000); // 5 saniye sonra yeniden bağlan
+        setTimeout(joinChannel, 5000); // 5 saniye sonra yeniden bağlan
       });
+
     } catch (error) {
       console.error('Ses kanalına bağlanırken hata oluştu:', error);
-      setTimeout(joinVoiceChannel, 5000); // 5 saniye sonra yeniden dene
+      setTimeout(joinChannel, 5000); // 5 saniye sonra yeniden dene
     }
   };
 
-  joinVoiceChannel();
+  joinChannel();
 });
 
 client.login(process.env.TOKEN).catch(error => console.error('Bot giriş hatası:', error));
