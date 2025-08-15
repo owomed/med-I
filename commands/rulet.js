@@ -5,7 +5,8 @@ module.exports = {
   usage: '@kullanıcı',
   async execute(client, message, args) {
     if (!message.mentions.users.size) {
-      return message.reply('Bir kullanıcı etiketlemelisin.');
+      // Hata mesajını güncel yapıya göre düzenledik
+      return message.reply({ content: '`Bir kullanıcı etiketlemelisin.`' });
     }
 
     const roleToCheck = '1267050088459407495'; // Kullanıcının sahip olup olmadığını kontrol edeceğimiz rol ID'si
@@ -13,23 +14,33 @@ module.exports = {
     const guild = message.guild; // Mesajın atıldığı sunucu
 
     if (!mentionedUser) {
-      return message.reply('`Belirtilen kullanıcı bulunamadı.`');
+      return message.reply({ content: '`Belirtilen kullanıcı bulunamadı.`' });
     }
 
     const role = guild.roles.cache.get(roleToCheck);
 
     if (!role) {
-      return message.reply(`\`ID'si ${roleToCheck} olan rol bulunamadı.\``);
+      return message.reply({ content: `\`ID'si ${roleToCheck} olan rol bulunamadı.\`` });
     }
 
     if (mentionedUser.roles.cache.has(roleToCheck)) {
       // Kullanıcının rolü varsa al
-      await mentionedUser.roles.remove(roleToCheck);
-      return message.reply(`\`${mentionedUser.user.tag} adlı kullanıcıdan ${role.name} rolü alındı.\``);
+      try {
+        await mentionedUser.roles.remove(role);
+        return message.reply({ content: `\`${mentionedUser.user.tag} adlı kullanıcıdan ${role.name} rolü alındı.\`` });
+      } catch (error) {
+        console.error('Rol alma hatası:', error);
+        return message.reply({ content: 'Rol alınırken bir hata oluştu.' });
+      }
     } else {
       // Kullanıcının rolü yoksa ver
-      await mentionedUser.roles.add(roleToCheck);
-      return message.reply(`\`${mentionedUser.user.tag} adlı kullanıcıya ${role.name} rolü verildi.\``);
+      try {
+        await mentionedUser.roles.add(role);
+        return message.reply({ content: `\`${mentionedUser.user.tag} adlı kullanıcıya ${role.name} rolü verildi.\`` });
+      } catch (error) {
+        console.error('Rol verme hatası:', error);
+        return message.reply({ content: 'Rol verilirken bir hata oluştu.' });
+      }
     }
   },
 };
