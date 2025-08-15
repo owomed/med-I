@@ -1,4 +1,4 @@
-const { Client, Collection, GatewayIntentBits } = require('discord.js'); // Buraya GatewayIntentBits eklendi
+const { Client, Collection, GatewayIntentBits, ActivityType } = require('discord.js'); // ActivityType eklendi
 const fs = require('fs');
 const db = require("quick.db");
 const { prefix } = require('./Settings/config.json');
@@ -16,7 +16,7 @@ const client = new Client({
   ],
   presence: {
     status: "idle",
-    activities: [{ name: "MED Ⅰ", type: "LISTENING" }] // "activity" yerine "activities" ve obje içinde "type" kullanıldı
+    activities: [{ name: "MED Ⅰ", type: ActivityType.Listening }] // ActivityType kullanıldı
   }
 });
 
@@ -43,7 +43,7 @@ for (const file of commandFiles) {
 }
 
 // Mesaj olayını işleyin
-client.on('messageCreate', async message => { // "message" yerine "messageCreate" kullanıldı
+client.on('messageCreate', async message => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).split(/ +/);
@@ -62,19 +62,17 @@ client.on('messageCreate', async message => { // "message" yerine "messageCreate
 
 // Durumları ayarla
 const statuses = [
-  { name: 'MED Ⅰ', type: 'LISTENING' },
-  { name: 'MED 💚 hicckimse', type: 'WATCHING' },
-  { name: 'hicckimse 💛 MED', type: 'WATCHING' },
-  { name: 'MED ❤️ hicckimse', type: 'WATCHING' },
-  { name: 'hicckimse 🤍 MED', type: 'WATCHING' },
-  { name: 'MED 🤎 hicckimse', type: 'WATCHING' },
-  { name: 'hicckimse 💜 MED', type: 'WATCHING' },
-  { name: 'MED 🤎 hicckimse', type: 'WATCHING' },
-  { name: 'hicckimse 💙 MED', type: 'WATCHING' }
+  { name: 'MED Ⅰ', type: ActivityType.Listening }, // ActivityType kullanıldı
+  { name: 'MED 💚 hicckimse', type: ActivityType.Watching },
+  { name: 'hicckimse 💛 MED', type: ActivityType.Watching },
+  { name: 'MED ❤️ hicckimse', type: ActivityType.Watching },
+  { name: 'hicckimse 🤍 MED', type: ActivityType.Watching },
+  { name: 'MED 🤎 hicckimse', type: ActivityType.Watching },
+  { name: 'hicckimse 💜 MED', type: ActivityType.Watching },
+  { name: 'MED 🤎 hicckimse', type: ActivityType.Watching },
+  { name: 'hicckimse 💙 MED', type: ActivityType.Watching }
 ];
 let statusIndex = 0;
-
-
 
 client.on('ready', () => {
   console.log(`Bot hazır: ${client.user.tag}`);
@@ -85,19 +83,13 @@ client.on('ready', () => {
     try {
       client.user.setPresence({
         status: 'idle',
-        activities: [{
-          name: statuses[statusIndex].name,
-          type: statuses[statusIndex].type
-        }]
+        activities: [statuses[statusIndex]]
       });
     } catch (error) {
       console.error('Durum ayarlama hatası:', error);
     }
   }, 10000);
 });
-
-
-
 
 client.login(process.env.TOKEN);
 
