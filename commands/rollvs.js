@@ -1,53 +1,96 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
+    // Prefix komutları için ad ve takma ad
     name: 'rollvs',
-    description: 'En az iki kullanıcıya Rollvs rolü verir.',
-    async execute(client, message, args) {
-        const allowedRoleID = '1238576058119487539'; // Komutu kullanabilecek rol ID'si
-        const targetRoleID = '1238585776388968518'; // Kontrol edilecek ve değiştirilecek rol ID'si
+    aliases: ['rollvs'],
 
-        // Kullanıcının yeterli role sahip olup olmadığını kontrol et
-        if (!message.member || !message.member.roles.cache.has(allowedRoleID)) {
-            return message.reply({ content: '`Bu komutu kullanma yetkiniz bulunmamaktadır.`' });
+    // Slash Komut verileri (sadece 2 kullanıcı için)
+    data: new SlashCommandBuilder()
+        .setName('rollvs')
+        .setDescription('İki kullanıcıya Rollvs rolü verir/alır.')
+        .addUserOption(option =>
+            option.setName('kullanıcı1')
+                .setDescription('Birinci kullanıcıyı seçin.')
+                .setRequired(true))
+        .addUserOption(option =>
+            option.setName('kullanıcı2')
+                .setDescription('İkinci kullanıcıyı seçin.')
+                .setRequired(true)),
+
+    async execute(client, interactionOrMessage, args) {
+        const allowedRoleID = '1238576058119487539';
+        const targetRoleID = '1238585776388968518';
+
+        let membersToProcess = [];
+        let isSlashCommand = interactionOrMessage.isCommand?.();
+
+        if (isSlashCommand) {
+            await interactionOrMessage.deferReply({ ephemeral: false });
+            membersToProcess.push(
+                interactionOrMessage.options.getMember('kullanıcı1'),
+                interactionOrMessage.options.getMember('kullanıcı2')
+            );
+        } else {
+            membersToProcess = interactionOrMessage.mentions.members.first(2);
         }
 
-        // En az iki kullanıcı etiketlenmiş mi kontrol et
-        const memberMentions = message.mentions.members;
+        const authorMember = interactionOrMessage.member;
+        if (!authorMember || !authorMember.roles.cache.has(allowedRoleID)) {
+            const embed = new EmbedBuilder()
+                .setColor('Red')
+                .setDescription('`Bu komutu kullanma yetkiniz bulunmamaktadır.`');
+            
+            return isSlashCommand
+                ? await interactionOrMessage.editReply({ embeds: [embed] })
+                : await interactionOrMessage.reply({ embeds: [embed] });
+        }
         
-        if (memberMentions.size < 2) {
-            return message.reply({ content: '`Lütfen en az iki geçerli kullanıcı etiketleyin. Örnek: .rollvs @kullanıcı1 @kullanıcı2`' });
+        if (membersToProcess.length !== 2) {
+            const embed = new EmbedBuilder()
+                .setColor('Red')
+                .setDescription('`Lütfen iki geçerli kullanıcı etiketleyin.`');
+            return isSlashCommand
+                ? await interactionOrMessage.editReply({ embeds: [embed] })
+                : await interactionOrMessage.reply({ embeds: [embed] });
+        }
+        
+        const [member1, member2] = membersToProcess;
+        
+        const targetRole = interactionOrMessage.guild.roles.cache.get(targetRoleID);
+        if (!targetRole) {
+            const errorEmbed = new EmbedBuilder().setColor('Red').setDescription('Hedef rol bulunamadı.');
+            return isSlashCommand
+                ? await interactionOrMessage.editReply({ embeds: [errorEmbed] })
+                : await interactionOrMessage.reply({ embeds: [errorEmbed] });
         }
 
-        // Her etiketlenen kullanıcı için işlem yap
-        for (const member of memberMentions.values()) {
-            if (member.roles.cache.has(targetRoleID)) {
-                try {
+        let results = [];
+        for (const member of [member1, member2]) {
+            try {
+                if (member.roles.cache.has(targetRoleID)) {
                     await member.roles.remove(targetRoleID);
-                    const embed = new EmbedBuilder()
-                        .setColor('Green')
-                        .setDescription(`<a:med_onay:1240943849795489812> ${member.user.tag} kullanıcısından rol alındı.`);
-                    await message.channel.send({ embeds: [embed] });
-                } catch (err) {
-                    const embed = new EmbedBuilder()
-                        .setColor('Red')
-                        .setDescription(`<a:med_hayir:1240942589977559081> ${member.user.tag} kullanıcısından rol alınamadı: ${err.message}`);
-                    await message.channel.send({ embeds: [embed] });
-                }
-            } else {
-                try {
+                    results.push(`🟢 **${member.user.tag}** kullanıcısından rol alındı.`);
+                } else {
                     await member.roles.add(targetRoleID);
-                    const embed = new EmbedBuilder()
-                        .setColor('Green')
-                        .setDescription(`<a:med_onay:1240943849795489812> ${member.user.tag} kullanıcısına rol verildi.`);
-                    await message.channel.send({ embeds: [embed] });
-                } catch (err) {
-                    const embed = new EmbedBuilder()
-                        .setColor('Red')
-                        .setDescription(`<a:med_hayir:1240942589977559081> ${member.user.tag} kullanıcısına rol verilemedi: ${err.message}`);
-                    await message.channel.send({ embeds: [embed] });
+                    results.push(`<:check:1407066920686981230> **${member.user.tag}** kullanıcısına rol verildi.`);
                 }
+            } catch (err) {
+                console.error(`Rol işlemi hatası: ${member.user.tag}`, err);
+                results.push(`🔴 **${member.user.tag}** kullanıcısına rol verilemedi: \`${err.message}\``);
             }
+        }
+
+        const finalEmbed = new EmbedBuilder()
+            .setColor('Green')
+            .setTitle('`Rollvs` Rol Güncelleme Sonuçları')
+            .setDescription(results.join('\n'));
+
+        // --- DÜZELTİLEN SON SATIR ---
+        if (isSlashCommand) {
+            await interactionOrMessage.editReply({ embeds: [finalEmbed] });
+        } else {
+            await interactionOrMessage.reply({ embeds: [finalEmbed] });
         }
     },
 };
