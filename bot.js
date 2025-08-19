@@ -83,15 +83,16 @@ client.on(Events.InteractionCreate, async interaction => {
 client.on('ready', () => {
     console.log(`Bot hazır: ${client.user.tag}`);
 
-    // Durumu tek bir seferde ayarla
     client.user.setPresence({
-        status: 'idle',
+        status: 'idle', 
         activities: [{
+            name: 'Custom Status',
+            state: 'OwO 💛 MED ile ilgileniyor', 
             type: ActivityType.Custom,
-            name: 'customname',
-            state: 'OwO 💛 MED ile ilgileniyor'
         }]
     });
+});
+
     
     // Statusun başarılı bir şekilde ayarlanıp ayarlanmadığını kontrol et
     // client.user.presence.status değeri 'idle' olmalıdır
