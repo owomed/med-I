@@ -80,6 +80,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
+
 client.on('ready', () => {
     console.log(`Bot hazır: ${client.user.tag}`);
 
@@ -92,14 +93,10 @@ client.on('ready', () => {
         }]
     });
 
-});
-    
-    // Statusun başarılı bir şekilde ayarlanıp ayarlanmadığını kontrol et
-    // client.user.presence.status değeri 'idle' olmalıdır
+    // Bu log satırları artık ready fonksiyonunun içinde
     console.log(`Ayarlanan status: ${client.user.presence.status}`);
     console.log(`Ayarlanan aktivite: ${JSON.stringify(client.user.presence.activities)}`);
-
-
+});
 
 client.login(process.env.TOKEN);
 
