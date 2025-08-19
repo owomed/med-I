@@ -91,7 +91,7 @@ client.on('ready', () => {
             type: ActivityType.Custom,
         }]
     });
-});
+
 
     
     // Statusun başarılı bir şekilde ayarlanıp ayarlanmadığını kontrol et
