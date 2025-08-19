@@ -1,9 +1,22 @@
 const { Client, Collection, GatewayIntentBits, ActivityType, Events } = require('discord.js');
+const { joinVoiceChannel } = require('@discordjs/voice');
 const fs = require('fs');
-const db = require("quick.db");
+const db = require("quick.db"); // quick.db kütüphanesini kullanıyorsanız gerekli
 const { prefix } = require('./Settings/config.json');
 require('dotenv').config();
-require('./stayInVoice.js');
+
+// Render için HTTP sunucusu
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('Bot aktif ve çalışıyor.');
+});
+
+app.listen(port, () => {
+    console.log(`Render HTTP sunucusu ${port} portunda dinleniyor.`);
+});
 
 // client nesnesi oluşturulurken gerekli intentler eklendi
 const client = new Client({
@@ -80,35 +93,59 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
-
+// Bot hazır olduğunda yapılacak işlemler
 client.on('ready', () => {
     console.log(`Bot hazır: ${client.user.tag}`);
 
+    // Durum ayarları
     client.user.setPresence({
-        status: 'idle', 
+        status: 'idle',
         activities: [{
             name: 'Custom Status',
-            state: 'OwO 💛 MED ile ilgileniyor', 
+            state: 'OwO 💛 MED ile ilgileniyor',
             type: ActivityType.Custom,
         }]
     });
-
-    // Bu log satırları artık ready fonksiyonunun içinde
     console.log(`Ayarlanan status: ${client.user.presence.status}`);
     console.log(`Ayarlanan aktivite: ${JSON.stringify(client.user.presence.activities)}`);
+
+    // Ses kanalına bağlanma mantığı
+    const channelId = '1235643294973956158'; // Ses kanalının ID'sini buraya ekleyin
+    const guild = client.guilds.cache.first();
+
+    if (!guild) {
+        console.error('Sunucu bulunamadı.');
+        return;
+    }
+
+    const voiceChannel = guild.channels.cache.get(channelId);
+    if (!voiceChannel) {
+        console.error('Ses kanalı bulunamadı.');
+        return;
+    }
+
+    const joinChannel = () => {
+        try {
+            const connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            });
+
+            console.log('Ses kanalına katıldı.');
+
+            connection.on('disconnect', () => {
+                console.log('Ses kanalı bağlantısı kesildi, yeniden bağlanıyor...');
+                setTimeout(joinChannel, 5000); // 5 saniye sonra yeniden bağlan
+            });
+
+        } catch (error) {
+            console.error('Ses kanalına bağlanırken hata oluştu:', error);
+            setTimeout(joinChannel, 5000); // 5 saniye sonra yeniden dene
+        }
+    };
+    joinChannel();
 });
 
-client.login(process.env.TOKEN);
-
-// Render için HTTP sunucusu
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-    res.send('Bot aktif ve çalışıyor.');
-});
-
-app.listen(port, () => {
-    console.log(`Render HTTP sunucusu ${port} portunda dinleniyor.`);
-});
+// Bot giriş
+client.login(process.env.TOKEN).catch(error => console.error('Bot giriş hatası:', error));
