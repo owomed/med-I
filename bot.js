@@ -92,14 +92,14 @@ client.on('ready', () => {
         }]
     });
 
-
+});
     
     // Statusun başarılı bir şekilde ayarlanıp ayarlanmadığını kontrol et
     // client.user.presence.status değeri 'idle' olmalıdır
     console.log(`Ayarlanan status: ${client.user.presence.status}`);
     console.log(`Ayarlanan aktivite: ${JSON.stringify(client.user.presence.activities)}`);
 
-});
+
 
 client.login(process.env.TOKEN);
 
