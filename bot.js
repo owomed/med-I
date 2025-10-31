@@ -102,7 +102,8 @@ client.on('ready', () => {
         status: 'idle',
         activities: [{
             name: 'Custom Status',
-            state: 'OwO 💛 MED ile ilgileniyor',
+           // state: 'OwO 💛 MED ile ilgileniyor',
+            state: 'OwO MED :( ',
             type: ActivityType.Custom,
         }]
     });
